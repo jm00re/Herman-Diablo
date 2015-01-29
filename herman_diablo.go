@@ -6,17 +6,30 @@ import (
 	//"github.com/davecheney/profile"
 	"math"
 	"os"
+	//"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
 	//defer profile.Start(profile.CPUProfile).Stop()
+	start := time.Now()
 	player, board := ReadBoard()
 	//_, board := ReadBoard()
 	//fmt.Println(board)
 	//fmt.Println(EvalBoard(board))
-	fmt.Println(DetermineMove(player, board, 12))
+	count := uint8(7)
+	//fmt.Println(time.Minutes(time.Since(start)))
+	//fmt.Println(300 * time.Microsecond)
+	//fmt.Println(time.Since(start))
+	//fmt.Println(time.Seconds(time.Since(start)))
+	for time.Since(start) < 3*time.Second {
+		fmt.Println(count)
+		fmt.Println(time.Since(start))
+		fmt.Println(DetermineMove(player, board, count))
+		count += 1
+	}
 }
 
 func DetermineMove(player bool, board [14]uint8, depth uint8) uint8 {
