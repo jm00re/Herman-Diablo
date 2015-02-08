@@ -9,42 +9,29 @@ import (
 	//"reflect"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 )
 
 func main() {
 	//defer profile.Start(profile.CPUProfile).Stop()
-	start := time.Now()
+	//start := time.Now()
 	player, board := ReadBoard()
-	//_, board := ReadBoard()
-	//fmt.Println(board)
-	//fmt.Println(EvalBoard(board))
-	count := uint8(7)
-	//fmt.Println(time.Minutes(time.Since(start)))
-	//fmt.Println(300 * time.Microsecond)
-	//fmt.Println(time.Since(start))
-	//fmt.Println(time.Seconds(time.Since(start)))
-	for time.Since(start) < 3*time.Second {
-		fmt.Println(count)
-		fmt.Println(time.Since(start))
-		fmt.Println(DetermineMove(player, board, count))
-		count += 1
-	}
+	fmt.Println(DetermineMove(player, board, 12))
+	//fmt.Println(time.Since(start).Seconds())
 }
 
 func DetermineMove(player bool, board [14]uint8, depth uint8) uint8 {
 	scoredMoves := make(map[uint8]int32)
 	total := SumSide(true, board) + SumSide(false, board)
-	if total <= 30 && total > 22 {
+	if total <= 38 && total > 28 {
 		depth += 1
-	} else if total <= 22 && total > 18 {
+	} else if total <= 28 && total > 20 {
 		depth += 2
-	} else if total <= 18 && total > 12 {
+	} else if total <= 20 && total > 16 {
 		depth += 3
-	} else if total <= 12 {
+	} else if total <= 16 {
 		depth += 4
 	}
-	//for _, move := range PotentialMoves(player, board) {
 	pMoves := PotentialMoves(player, board)
 	for i := 0; i < 6; i++ {
 		move := uint8(i)
@@ -173,7 +160,11 @@ func AlphaBeta(player bool, board [14]uint8, alpha int32, beta int32, depth uint
 		return EvalBoard(player, board)
 	} else {
 		if player {
-			//for _, move := range PotentialMoves(player, board) {
+			//fmt.Println("Alpha: ", alpha, "Beta: ", beta, "Eval: ", EvalBoard(player, board))
+			//if EvalBoard(player, board) < alpha {
+			//	//fmt.Println(EvalBoard(player, board))
+			//	return alpha
+			//}
 			pMoves := PotentialMoves(player, board)
 			for i := 0; i < 6; i++ {
 				move := uint8(i)
@@ -189,10 +180,12 @@ func AlphaBeta(player bool, board [14]uint8, alpha int32, beta int32, depth uint
 					}
 				}
 			}
-			//fmt.Println(alpha)
 			return alpha
 		} else {
-			//for _, move := range PotentialMoves(player, board) {
+			//if EvalBoard(player, board) > beta {
+			//	//fmt.Println(EvalBoard(player, board))
+			//	return beta
+			//}
 			pMoves := PotentialMoves(player, board)
 			for i := 0; i < 6; i++ {
 				move := uint8(i)
@@ -223,31 +216,16 @@ func PlayerCount(board [14]uint8) (count int8) {
 
 func EvalBoard(player bool, board [14]uint8) int32 {
 	//If  player wins, return max/min value
-	//if GameFinished(board) {
-	//	if board[6] > board[13] {
-	//		return math.MaxInt32
-	//	} else if board[13] > board[6] {
-	//		return math.MinInt32
-	//	} else {
-	//		return 0
-	//	}
-	//}
-	//If a player has more than 24, they win
 	if board[6] > 24 {
 		return math.MaxInt32
 	} else if board[13] > 24 {
 		return math.MinInt32
 	} else {
-		//fmt.Println(int32(board[6] * 8))
-		//fmt.Println(int32(board[13] * 8))
-		//fmt.Println(int32(PlayerCount(board)))
 		if player {
 			return int32(board[6])*5 + int32(board[13])*-5 + int32(SumSide(player, board))
 		} else {
 			return int32(board[13])*-5 + int32(board[6])*5 - int32(SumSide(player, board))
 		}
-		//return int32(board[6]*5) - int32(board[13]*5) + int32(PlayerCount(board))
-		//return int32(board[6]*1) - int32(board[13]*1)
 	}
 }
 
@@ -268,31 +246,36 @@ func MakeMove(player bool, board [14]uint8, move uint8) (newBoard [14]uint8) {
 		newBoard[i] = board[i]
 	}
 	newBoard[move] = 0
-	for count > 0 {
-		if player {
+	if player {
+		for count > 0 {
 			if pos == 13 {
 				pos = (pos + 1) % 14
 			}
 			newBoard[pos] += 1
 			count -= 1
-			if count == 0 && pos >= 0 && pos <= 5 && newBoard[pos] == 1 {
-				newBoard[pos] += newBoard[12-pos]
-				newBoard[12-pos] = 0
-			}
 			pos = (pos + 1) % 14
-		} else {
+		}
+	} else {
+		for count > 0 {
 			if pos == 6 {
 				pos = (pos + 1) % 14
 			}
 			newBoard[pos] += 1
 			count -= 1
-			if count == 0 && pos >= 7 && pos <= 12 && newBoard[pos] == 1 {
-				newBoard[pos] += newBoard[12-pos]
-				newBoard[12-pos] = 0
-			}
 			pos = (pos + 1) % 14
 		}
 	}
+	// Steal
+	// Need to decrement to undo the last move
+	pos = (pos - 1) % 14
+	if player && pos >= 0 && pos <= 5 && newBoard[pos] == 1 {
+		newBoard[pos] += newBoard[12-pos]
+		newBoard[12-pos] = 0
+	} else if !player && pos >= 7 && pos <= 12 && newBoard[pos] == 1 {
+		newBoard[pos] += newBoard[12-pos]
+		newBoard[12-pos] = 0
+	}
+
 	// If the game is finished, sum the sides and add to mancala
 	if GameFinished(newBoard) {
 		for i := 0; i < 6; i++ {
