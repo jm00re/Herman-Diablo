@@ -21,15 +21,16 @@ func main() {
 }
 
 func DetermineMove(player bool, board [14]uint8, depth uint8) uint8 {
+
 	scoredMoves := make(map[uint8]int32)
 	total := SumSide(true, board) + SumSide(false, board)
-	if total <= 38 && total > 28 {
+	if total <= 30 && total > 22 {
 		depth += 1
-	} else if total <= 28 && total > 20 {
+	} else if total <= 22 && total > 18 {
 		depth += 2
-	} else if total <= 20 && total > 16 {
+	} else if total <= 18 && total > 12 {
 		depth += 3
-	} else if total <= 16 {
+	} else if total <= 12 {
 		depth += 4
 	}
 	pMoves := PotentialMoves(player, board)
@@ -88,25 +89,16 @@ func DetermineMove(player bool, board [14]uint8, depth uint8) uint8 {
 }
 
 func GameFinished(board [14]uint8) (finished bool) {
-	finished = true
+	var total1 uint8
+	var total2 uint8
 	if board[6] > 24 || board[13] > 24 {
 		return true
 	}
 	for i := 0; i < 6; i++ {
-		if board[i] != 0 {
-			finished = false
-		}
+		total1 += board[i]
+		total2 += board[i+7]
 	}
-	if finished {
-		return
-	}
-	finished = true
-	for i := 7; i < 13; i++ {
-		if board[i] != 0 {
-			finished = false
-		}
-	}
-	return
+	return total1 == 0 || total2 == 0
 }
 
 func PotentialMoves(player bool, board [14]uint8) (moves [6]bool) {
@@ -160,11 +152,6 @@ func AlphaBeta(player bool, board [14]uint8, alpha int32, beta int32, depth uint
 		return EvalBoard(player, board)
 	} else {
 		if player {
-			//fmt.Println("Alpha: ", alpha, "Beta: ", beta, "Eval: ", EvalBoard(player, board))
-			//if EvalBoard(player, board) < alpha {
-			//	//fmt.Println(EvalBoard(player, board))
-			//	return alpha
-			//}
 			pMoves := PotentialMoves(player, board)
 			for i := 0; i < 6; i++ {
 				move := uint8(i)
@@ -182,10 +169,6 @@ func AlphaBeta(player bool, board [14]uint8, alpha int32, beta int32, depth uint
 			}
 			return alpha
 		} else {
-			//if EvalBoard(player, board) > beta {
-			//	//fmt.Println(EvalBoard(player, board))
-			//	return beta
-			//}
 			pMoves := PotentialMoves(player, board)
 			for i := 0; i < 6; i++ {
 				move := uint8(i)
