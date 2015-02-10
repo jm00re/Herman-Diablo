@@ -11,11 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	//"time"
 )
 
-var weights [16]uint8
+var weights [5]uint8
 var useWeightedEval bool
 
 func main() {
@@ -28,13 +27,14 @@ func main() {
 	// EvalBoard weights:
 	// 0 - 13 weight of each pit
 	// 14, 15 - Weight of moves left to win
+	fmt.Println(uint8(rand.Intn(32)))
 	for true {
-		for i := 0; i < 16; i++ {
-			weights[i] = uint8(rand.Intn(256))
+		for i := 0; i < 5; i++ {
+			weights[i] = uint8(rand.Intn(32)) * uint8(rand.Intn(2))
 		}
 		playBoard := board
 		for !GameFinished(playBoard) {
-			playBoard = MakeMove(player, playBoard, DetermineMove(player, playBoard, 6))
+			playBoard = MakeMove(player, playBoard, DetermineMove(player, playBoard, 1))
 			player = !player
 			useWeightedEval = !useWeightedEval
 			//fmt.Println(playBoard)
@@ -249,47 +249,26 @@ func EvalBoard(player bool, board [14]uint8) int32 {
 	}
 }
 
-func WeightedEvalBoard(player bool, board [14]uint8, weights [16]uint8) (total int32) {
+func WeightedEvalBoard(player bool, board [14]uint8, weights [5]uint8) (total int32) {
 	//If  player wins, return max/min value
+	// weights[0] = Players mancala - oppoenents mancala
+	// weights[1] = 24 - player mancala
+	// weights[2] = 24 - oppoenent mancala
+	// weights[3] = Sum of player stones
+	// weights[4] = Sum of oppenents stones
 	if player {
-		// Single pits
-		total += int32(board[0] * weights[0])
-		total += int32(board[1] * weights[1])
-		total += int32(board[2] * weights[2])
-		total += int32(board[3] * weights[3])
-		total += int32(board[4] * weights[4])
-		total += int32(board[5] * weights[5])
-		total += int32(board[6] * weights[6])
-		total -= int32(board[7] * weights[7])
-		total -= int32(board[8] * weights[8])
-		total -= int32(board[9] * weights[9])
-		total -= int32(board[10] * weights[10])
-		total -= int32(board[11] * weights[11])
-		total -= int32(board[12] * weights[12])
-		total -= int32(board[13] * weights[13])
-		// Distance to winning
-		total += int32((24 - board[6]) * weights[14])
-		total -= int32((24 - board[13]) * weights[15])
+		total += int32(weights[0]) * (int32(board[6]) - int32(board[13]))
+		total += int32((25 - board[6]) * weights[1])
+		total -= int32((25 - board[13]) * weights[2])
+		total += int32(weights[3]) * int32((SumSide(player, board)))
+		total -= int32(weights[4]) * int32((SumSide(!player, board)))
 		return total
 	} else {
-		// Single pits
-		total -= int32(board[0] * weights[0])
-		total -= int32(board[1] * weights[1])
-		total -= int32(board[2] * weights[2])
-		total -= int32(board[3] * weights[3])
-		total -= int32(board[4] * weights[4])
-		total -= int32(board[5] * weights[5])
-		total -= int32(board[6] * weights[6])
-		total += int32(board[7] * weights[7])
-		total += int32(board[8] * weights[8])
-		total += int32(board[9] * weights[9])
-		total += int32(board[10] * weights[10])
-		total += int32(board[11] * weights[11])
-		total += int32(board[12] * weights[12])
-		total += int32(board[13] * weights[13])
-		// Distance to winning
-		total -= int32((24 - board[6]) * weights[14])
-		total += int32((24 - board[13]) * weights[15])
+		total -= int32(weights[0]) * (int32(board[13]) - int32(board[6]))
+		total -= int32((25 - board[13]) * weights[1])
+		total += int32((25 - board[6]) * weights[2])
+		total -= int32(weights[3]) * int32((SumSide(player, board)))
+		total += int32(weights[4]) * int32((SumSide(!player, board)))
 		return total
 	}
 }
